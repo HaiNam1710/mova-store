@@ -20,6 +20,70 @@ afterEach(() => {
 });
 
 describe("mapAuthUser", () => {
+  describe("mapAuthUser field assertions (#572)", () => {
+    it("returns null when supabaseUser is null or undefined", () => {
+      expect(mapAuthUser(null)).toBeNull();
+      expect(mapAuthUser(undefined)).toBeNull();
+    });
+
+    it("correctly maps all fields for a complete user with full metadata", () => {
+      const fullUser = {
+        id: "usr-full-1",
+        email: "fulluser@example.com",
+        user_metadata: {
+          full_name: "John Doe",
+          avatar_url: "https://example.com/photo.png",
+        },
+        app_metadata: {
+          is_admin: true,
+        },
+      };
+
+      const mapped = mapAuthUser(fullUser);
+      expect(mapped).toEqual({
+        id: "usr-full-1",
+        uid: "usr-full-1",
+        email: "fulluser@example.com",
+        displayName: "John Doe",
+        photoURL: "https://example.com/photo.png",
+        isAdminClaim: true,
+      });
+    });
+
+    it("maps user missing metadata using email prefix and default values", () => {
+      const partialUser = {
+        id: "usr-partial-2",
+        email: "contributor@domain.com",
+      };
+
+      const mapped = mapAuthUser(partialUser);
+      expect(mapped).toEqual({
+        id: "usr-partial-2",
+        uid: "usr-partial-2",
+        email: "contributor@domain.com",
+        displayName: "contributor",
+        photoURL: null,
+        isAdminClaim: false,
+      });
+    });
+
+    it("maps user with no email or metadata using default 'User' displayName", () => {
+      const bareUser = {
+        id: "usr-bare-3",
+      };
+
+      const mapped = mapAuthUser(bareUser);
+      expect(mapped).toEqual({
+        id: "usr-bare-3",
+        uid: "usr-bare-3",
+        email: "",
+        displayName: "User",
+        photoURL: null,
+        isAdminClaim: false,
+      });
+    });
+  });
+
   it("returns null for a null/undefined Supabase user", () => {
     expect(mapAuthUser(null)).toBeNull();
     expect(mapAuthUser(undefined)).toBeNull();
