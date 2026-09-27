@@ -67,9 +67,16 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const addToCart = (product) => {
+    const cartItemId =
+      product?.cartItemId ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `cart-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const itemWithId = { ...product, cartItemId };
+
     if (!isHydratedRef.current) {
       const stored = readStoredCart();
-      const updatedCartItems = [...stored.storedCartItems, product];
+      const updatedCartItems = [...stored.storedCartItems, itemWithId];
       const newItemCount = stored.storedItemCount + 1;
       const newTotalPrice = stored.storedTotalPrice + (product?.price || 0);
 
@@ -87,8 +94,8 @@ export const CartProvider = ({ children }) => {
 
     setCartItems((prevCartItems) => {
       const merged = isHydratedRef.current
-        ? [...prevCartItems, product]
-        : [...JSON.parse(localStorage.getItem("cartItems") || "[]"), product];
+        ? [...prevCartItems, itemWithId]
+        : [...JSON.parse(localStorage.getItem("cartItems") || "[]"), itemWithId];
       localStorage.setItem("cartItems", JSON.stringify(merged));
       return merged;
     });
