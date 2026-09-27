@@ -67,9 +67,16 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const addToCart = (product) => {
+    const cartItemId =
+      product?.cartItemId ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `cart-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const itemWithId = { ...product, cartItemId };
+
     if (!isHydratedRef.current) {
       const stored = readStoredCart();
-      const updatedCartItems = [...stored.storedCartItems, product];
+      const updatedCartItems = [...stored.storedCartItems, itemWithId];
       const newItemCount = stored.storedItemCount + 1;
       const newTotalPrice = stored.storedTotalPrice + (product?.price || 0);
 
@@ -87,8 +94,8 @@ export const CartProvider = ({ children }) => {
 
     setCartItems((prevCartItems) => {
       const merged = isHydratedRef.current
-        ? [...prevCartItems, product]
-        : [...JSON.parse(localStorage.getItem("cartItems") || "[]"), product];
+        ? [...prevCartItems, itemWithId]
+        : [...JSON.parse(localStorage.getItem("cartItems") || "[]"), itemWithId];
       localStorage.setItem("cartItems", JSON.stringify(merged));
       return merged;
     });
@@ -113,7 +120,9 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = (product) => {
     if (!isHydratedRef.current) {
       const stored = readStoredCart();
-      const index = stored.storedCartItems.findIndex((item) => item.id === product?.id);
+      const index = stored.storedCartItems.findIndex((item) =>
+        product?.cartItemId ? item.cartItemId === product.cartItemId : item.id === product?.id
+      );
       if (index === -1) return;
 
       const removedItem = stored.storedCartItems[index];
@@ -138,7 +147,9 @@ export const CartProvider = ({ children }) => {
       const merged = isHydratedRef.current
         ? [...prevCartItems]
         : [...JSON.parse(localStorage.getItem("cartItems") || "[]")];
-      const index = merged.findIndex((item) => item.id === product.id);
+      const index = merged.findIndex((item) =>
+        product?.cartItemId ? item.cartItemId === product.cartItemId : item.id === product?.id
+      );
       if (index === -1) return merged;
 
       merged.splice(index, 1);
@@ -158,7 +169,9 @@ export const CartProvider = ({ children }) => {
       const items = isHydratedRef.current
         ? cartItems
         : JSON.parse(localStorage.getItem("cartItems") || "[]");
-      const removedItem = items.find((item) => item.id === product.id);
+      const removedItem = items.find((item) =>
+        product?.cartItemId ? item.cartItemId === product.cartItemId : item.id === product?.id
+      );
       if (!removedItem) return prevTotalPrice;
       const newPrice = isHydratedRef.current
         ? prevTotalPrice - removedItem.price
