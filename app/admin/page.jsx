@@ -4,6 +4,8 @@ import { listProducts, deleteProduct } from "../../lib/products";
 import AddProductForm from "./AddProductForm";
 import EditProductForm from "./EditProductForm";
 import AdminGuard from "../../components/AdminGuard";
+import Toast from "../../components/Toast";
+import useToast from "../../hooks/useToast";
 import Link from "next/link";
 import { SiStellar } from "react-icons/si";
 import { MdInventory } from "react-icons/md";
@@ -11,6 +13,7 @@ import { MdInventory } from "react-icons/md";
 const ProductsAdminContent = () => {
   const [products, setProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const { toast, showToast, hideToast } = useToast(3000);
 
   useEffect(() => {
     fetchProducts();
@@ -39,8 +42,10 @@ const ProductsAdminContent = () => {
     try {
       await deleteProduct(id);
       setProducts(products.filter((product) => product.id !== id));
+      showToast("Product deleted successfully");
     } catch (error) {
       console.error("Error deleting product: ", error);
+      showToast("Error deleting product: " + (error?.message || "Operation failed"));
     }
   };
 
@@ -116,7 +121,9 @@ const ProductsAdminContent = () => {
           </table>
         </div>
       </div>
-    </div>
+    
+      <Toast message={toast.message} show={toast.show} onClose={hideToast} />
+</div>
   );
 };
 
